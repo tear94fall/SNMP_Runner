@@ -1,4 +1,5 @@
 CC=g++
+CPPFLAGS= -std=c++11
 
 OBJS1=snmprun.o
 TARGETS= snmprun
@@ -13,7 +14,7 @@ DLFLAGS=-fPIC -shared
 all: $(TARGETS)
 
 snmprun: $(OBJS1)
-	$(CC) -g -o snmprun $(OBJS1) $(BUILDLIBS)
+	$(CC) -pthread -o snmprun $(OBJS1) $(BUILDLIBS)
 
 clean:
 	rm -rf $(OBJS1) $(TARGETS)

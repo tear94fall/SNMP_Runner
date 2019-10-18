@@ -1,5 +1,6 @@
 
 #include "snmprun.hpp"
+#include "sender_thread.hpp"
 
 void initialize(void);
 int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu);
@@ -7,6 +8,10 @@ int asynch_response(int operation, struct snmp_session *sp, int reqid, struct sn
 void asynchronous(void);
 
 int main(int argc, char **argv){
+    pthread_create(&sender_thread, NULL, sender_thread_function, NULL);
+    pthread_join(sender_thread, NULL);
+
+
     initialize();
 
     printf("---------- asynchronous -----------\n");
