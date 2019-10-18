@@ -5,12 +5,13 @@
 
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
+#include <pthread.h>
 
 struct host{
     const char *name;
     const char *community;
 } hosts[] = {
-    //{"127.0.0.1", "public"}
+    {"127.0.0.1", "public"},
     {NULL}
 };
 
@@ -40,8 +41,5 @@ struct session{
 sessions[sizeof(hosts) / sizeof(hosts[0])];
 
 int active_hosts; 
-
-
-
 
 #endif

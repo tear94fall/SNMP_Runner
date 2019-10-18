@@ -1,32 +1,19 @@
-#include <net-snmp/net-snmp-config.h>
-#include <net-snmp/net-snmp-includes.h>
 
-struct host{
-    const char *name;
-    const char *community;
-} hosts[] = {
-    {"127.0.0.1", "public"}
-    {NULL}
-};
+#include "snmprun.hpp"
 
-struct oid_struct
-{
-    const char *Name;
-    oid Oid[MAX_OID_LEN];
-    int OidLen;
-} oids[] = {
-    {".1.3.6.1.2.1.1.1.0"},
-    {".1.3.6.1.2.1.1.2.0"},
-    {".1.3.6.1.2.1.1.3.0"},
-    {".1.3.6.1.2.1.1.4.0"},
-    {".1.3.6.1.2.1.1.5.0"},
-    {".1.3.6.1.2.1.1.6.0"},
-    {".1.3.6.1.2.1.1.7.0"},
-    {".1.3.6.1.2.1.1.2.0"},
-    {".1.3.6.1.2.1.2.1.0"},
-    {NULL}
-};
+void initialize(void);
+int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu);
+int asynch_response(int operation, struct snmp_session *sp, int reqid, struct snmp_pdu *pdu, void *magic);
+void asynchronous(void);
 
+int main(int argc, char **argv){
+    initialize();
+
+    printf("---------- asynchronous -----------\n");
+    asynchronous();
+
+    return 0;
+}
 
 void initialize(void){
     struct oid_struct *op = oids;
@@ -91,15 +78,6 @@ char buf[1024];
 
     return 0;
 }
-
-struct session{
-    struct snmp_session *sess;
-    struct oid_struct *current_oid;
-}
-
-sessions[sizeof(hosts) / sizeof(hosts[0])];
-
-int active_hosts; 
 
 int asynch_response(int operation, struct snmp_session *sp, int reqid, struct snmp_pdu *pdu, void *magic){
     struct session *host = (struct session *)magic;
@@ -186,13 +164,4 @@ void asynchronous(void){
             snmp_close(hs->sess);
         }
     }
-}
-
-int main(int argc, char **argv){
-    initialize();
-
-    printf("---------- asynchronous -----------\n");
-    asynchronous();
-
-    return 0;
 }

@@ -16,4 +16,4 @@ snmprun: $(OBJS1)
 	$(CC) -g -o snmprun $(OBJS1) $(BUILDLIBS)
 
 clean:
-	rm -rf $(OBJS1)
+	rm -rf $(OBJS1) $(TARGETS)
