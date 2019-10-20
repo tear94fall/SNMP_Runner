@@ -12,6 +12,11 @@ pthread_t sender_thread;
 
 void *sender_thread_function(void *){
     printf("---------- sender thread ----------\n");
+    int cnt=0;
+    while(cnt<100000){
+        cnt++;
+        printf("a");
+    }
 }
 
 

@@ -1,6 +1,7 @@
 
 #include "snmprun.hpp"
 #include "sender_thread.hpp"
+#include "receiver_thread.hpp"
 
 void initialize(void);
 int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu);
@@ -9,8 +10,10 @@ void asynchronous(void);
 
 int main(int argc, char **argv){
     pthread_create(&sender_thread, NULL, sender_thread_function, NULL);
-    pthread_join(sender_thread, NULL);
+    pthread_create(&receiver_thread, NULL, receiver_thread_function, NULL);
 
+    pthread_join(sender_thread, NULL);
+    pthread_join(receiver_thread, NULL);
 
     initialize();
 
