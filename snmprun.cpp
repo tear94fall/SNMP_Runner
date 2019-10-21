@@ -1,24 +1,21 @@
 
 #include "snmprun.hpp"
-#include "sender_thread.hpp"
-#include "receiver_thread.hpp"
 
 void initialize(void);
 int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu);
 int asynch_response(int operation, struct snmp_session *sp, int reqid, struct snmp_pdu *pdu, void *magic);
-void asynchronous(void);
+void* asynchronous(void*);
+void* receiver(void*); 
 
 int main(int argc, char **argv){
-    pthread_create(&sender_thread, NULL, sender_thread_function, NULL);
-    pthread_create(&receiver_thread, NULL, receiver_thread_function, NULL);
+    pthread_t sender_thread;
+    pthread_t receiver_thread;
 
-    pthread_join(sender_thread, NULL);
-    pthread_join(receiver_thread, NULL);
-
+    pthread_create(&sender_thread, NULL, asynchronous, NULL);
     initialize();
 
     printf("---------- asynchronous -----------\n");
-    asynchronous();
+    pthread_join(sender_thread, NULL);
 
     return 0;
 }
@@ -40,16 +37,21 @@ void initialize(void){
 }
 
 int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu){
-char buf[1024];
+    char buf[1024];
     struct variable_list *vp;
     int ix;
     struct timeval now;
     struct timezone tz;
     struct tm *tm;
 
+    char time[1024];
+
+
     gettimeofday(&now, &tz);
     tm = localtime(&now.tv_sec);
     fprintf(stdout, "%.2d:%.2d:%.2d.%.6d ", tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec);
+    sprintf(time, "%.2d:%.2d:%.2d.%.6d ", tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec);
+
     switch (status){
     case STAT_SUCCESS:
         vp = pdu->variables;
@@ -57,8 +59,10 @@ char buf[1024];
         if (pdu->errstat == SNMP_ERR_NOERROR){
             while (vp){
                 snprint_variable(buf, sizeof(buf), vp->name, vp->name_length, vp);
-                fprintf(stdout, "%s: %s\n", sp->peername, buf);
+                // fprintf(stdout, "%s: %s\n", sp->peername, buf);
                 vp = vp->next_variable;
+                strcat(time, buf);
+                printf("=====%s====\n", time);  
             }
         }else{
             for (ix = 1; vp && ix != pdu->errindex; vp = vp->next_variable, ix++){
@@ -115,7 +119,7 @@ int asynch_response(int operation, struct snmp_session *sp, int reqid, struct sn
     return 1;
 }
 
-void asynchronous(void){
+void* asynchronous(void*){
     struct session *hs;
     struct host *hp;
 
@@ -172,4 +176,7 @@ void asynchronous(void){
             snmp_close(hs->sess);
         }
     }
+}
+
+void* receiver(void*){
 }

@@ -6,21 +6,26 @@
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <pthread.h>
+#include <cstring>
 
-struct host{
+typedef struct host{
     const char *name;
     const char *community;
-} hosts[] = {
-    {"127.0.0.1", "public"},
-    {NULL}
-};
+}host;
 
-struct oid_struct
+typedef struct oid_struct
 {
     const char *Name;
     oid Oid[MAX_OID_LEN];
     int OidLen;
-} oids[] = {
+}oid_struct;
+
+host hosts[] = {
+    {"127.0.0.1", "public"},
+    {NULL}
+};
+
+oid_struct oids[] = {
     {".1.3.6.1.2.1.1.1.0"},
     {".1.3.6.1.2.1.1.2.0"},
     {".1.3.6.1.2.1.1.3.0"},
