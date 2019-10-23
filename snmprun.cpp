@@ -4,18 +4,27 @@
 void initialize(void);
 int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu);
 int asynch_response(int operation, struct snmp_session *sp, int reqid, struct snmp_pdu *pdu, void *magic);
+void set_response(char* ipaddr, char* buf);
 void* asynchronous(void*);
 void* receiver(void*); 
 
 int main(int argc, char **argv){
+    for(int i=0;i<host_count;i++){
+        for(int j=0;j<oid_count;j++){
+            response[i][j]="";
+        }
+    }
+
     pthread_t sender_thread;
     pthread_t receiver_thread;
 
     pthread_create(&sender_thread, NULL, asynchronous, NULL);
+    pthread_create(&receiver_thread, NULL, receiver, NULL);
     initialize();
 
-    printf("---------- asynchronous -----------\n");
+    printf("-------------- start --------------\n");
     pthread_join(sender_thread, NULL);
+    pthread_join(receiver_thread, NULL);
 
     return 0;
 }
@@ -36,6 +45,61 @@ void initialize(void){
     }
 }
 
+void set_response(char* ipaddr, struct variable_list *vp, struct snmp_pdu *pdu){
+    bool is_exist123 = false;
+    int col_index123 = -1;
+
+    char result_buffer[2048];
+    memset(result_buffer, 0x00, sizeof(2048));
+
+    strcat(result_buffer, ipaddr);
+    strcat(result_buffer, " : ");
+
+    // 아이피가 이미 존재하는지 확인
+    for(int i=0;i<host_count;i++){
+        if(strcmp(response[i][0].c_str(),ipaddr)==0){
+            // 존재하면 인덱스와 플래그 값을 바꿈
+            is_exist123 = true;
+            col_index123 = i;
+        }
+    }
+
+    // 이미 아이피가 존재하는 경우
+    if(is_exist123){
+        // 존재하는 경우 oid 값의 빈값을 찾음
+        int row_index=-1;
+        for(int i=2;i<oid_count; i++){
+            if(response[col_index123][i]==""){
+                vp = pdu->variables;
+                char temp_buf[1024];
+                snprint_variable(temp_buf, sizeof(temp_buf), vp->name, vp->name_length, vp);
+                row_index=i;
+
+                strcat(result_buffer, temp_buf);
+                response[col_index123][row_index] = result_buffer;
+
+                break;
+            }
+        }
+
+    }else{
+        for(int i=0;i<host_count;i++){
+            if(response[i][0]==""){
+                response[i][0]=ipaddr;
+
+                vp = pdu->variables;
+                char temp_buf[1024];
+                snprint_variable(temp_buf, sizeof(temp_buf), vp->name, vp->name_length, vp);
+
+                strcat(result_buffer, temp_buf);
+                response[i][1] = result_buffer;
+                break;
+            }
+        }
+    }
+    memset(result_buffer, 0x00, sizeof(result_buffer));
+}
+
 int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu){
     char buf[1024];
     struct variable_list *vp;
@@ -46,7 +110,10 @@ int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu){
 
     gettimeofday(&now, &tz);
     tm = localtime(&now.tv_sec);
-    fprintf(stdout, "%.2d:%.2d:%.2d.%.6d ", tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec);
+    //fprintf(stdout, "%.2d:%.2d:%.2d.%.6d ", tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec);
+
+    char ip_addr[100];
+    strcpy(ip_addr, sp->peername);
 
     switch (status){
     case STAT_SUCCESS:
@@ -55,7 +122,7 @@ int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu){
         if (pdu->errstat == SNMP_ERR_NOERROR){
             while (vp){
                 snprint_variable(buf, sizeof(buf), vp->name, vp->name_length, vp);
-                fprintf(stdout, "%s: %s\n", sp->peername, buf);
+                // fprintf(stdout, "%s: %s\n", sp->peername, buf);
                 vp = vp->next_variable;
             }
         }else{
@@ -69,14 +136,40 @@ int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu){
             else{
                 strcpy(buf, "(none)");
             }
-            fprintf(stdout, "%s: %s: %s\n", sp->peername, buf, snmp_errstring(pdu->errstat));
+            // fprintf(stdout, "%s: %s: %s\n", sp->peername, buf, snmp_errstring(pdu->errstat));
         }
+
+        set_response(ip_addr, vp, pdu);
+
         return 1;
 
-    case STAT_TIMEOUT:
-        fprintf(stdout, "%s: Timeout\n", sp->peername);
-        return 0;
+    case STAT_TIMEOUT:{
+        bool is_exist123 = false;
+        int col_index123 = -1;
 
+        // 아이피가 이미 존재하는지 확인
+        for(int i=0;i<host_count;i++){
+            if(strcmp(response[i][0].c_str(),ip_addr)==0){
+                // 존재하면 인덱스와 플래그 값을 바꿈
+                is_exist123 = true;
+                col_index123 = i;
+            }
+        }
+
+        // 이미 아이피가 존재하는 경우
+        if(is_exist123){
+        }else{
+            for(int i=0;i<host_count;i++){
+                if(response[i][0]==""){
+                    response[i][0]=ip_addr;
+                    response[i][1] = "TIME OUT";
+                    break;
+                }
+            }
+        }   
+
+        return 0;
+    }
     case STAT_ERROR:
         snmp_perror(sp->peername);
         return 0;
@@ -173,4 +266,43 @@ void* asynchronous(void*){
 }
 
 void* receiver(void*){
+    int cnt=0;
+    while(1){
+        if(cnt==host_count){
+            printf("--------------- end ---------------\n");
+            break;
+        }
+
+        for (int i = 0; i < host_count; i++){
+            bool is_end=false;
+            if(response[i][1] == "TIME OUT"){
+                is_end=true;
+            }else{
+                for(int j=0;j<oid_count;j++){
+                    if(response[i][j]!=""&&response[i][j]!="null"){
+                        is_end = true;
+                    }else{
+                        is_end = false;
+                    }
+                }
+            }
+
+            if(is_end){
+                for (int j = 0; j < oid_count; j++){
+                    if (j == 0){
+                        printf("*** num.%d host is : %s ***\n", i + 1, response[i][0].c_str());
+                    }
+                    if (j != 0 && response[i][j] != "" && response[i][j] != "null"){
+                        if(response[i][j]=="TIME OUT"){
+                            printf("TIME OUT\n");
+                        }else{
+                            printf("%d.oid is : %s\n", j, response[i][j].c_str());
+                        }
+                        response[i][j] = "null";
+                    }
+                }
+                cnt++;
+            }
+        }
+    }
 }

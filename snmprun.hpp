@@ -8,7 +8,21 @@
 #include <pthread.h>
 #include <string.h>
 #include <iostream>
+#include <cstdio>
 #include <vector>
+
+const int host_count=4;
+const int oid_count=9;
+
+const std::string timeout = "TIMEOUT";
+
+std::string response[host_count][oid_count];
+/*
+이런 형태
+{아이피, 응답, 응답, ...},
+{아이피, 응답, 응답, ...},
+{아이피, 응답, 응답, ...}
+*/
 
 typedef struct host{
     const char *name;
@@ -24,8 +38,10 @@ typedef struct oid_struct
 
 host hosts[] = {
     {"127.0.0.1", "public"},
-    {NULL}
-};
+    {"127.0.0.2", "public"},
+    {"127.0.0.3", "public"},
+    {"127.0.0.4", "public"},
+    {NULL}};
 
 oid_struct oids[] = {
     {".1.3.6.1.2.1.1.2.0"},
