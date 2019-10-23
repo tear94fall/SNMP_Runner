@@ -6,7 +6,9 @@
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <pthread.h>
-#include <cstring>
+#include <string.h>
+#include <iostream>
+#include <vector>
 
 typedef struct host{
     const char *name;
@@ -26,7 +28,6 @@ host hosts[] = {
 };
 
 oid_struct oids[] = {
-    {".1.3.6.1.2.1.1.1.0"},
     {".1.3.6.1.2.1.1.2.0"},
     {".1.3.6.1.2.1.1.3.0"},
     {".1.3.6.1.2.1.1.4.0"},

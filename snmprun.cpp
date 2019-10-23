@@ -44,13 +44,9 @@ int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu){
     struct timezone tz;
     struct tm *tm;
 
-    char time[1024];
-
-
     gettimeofday(&now, &tz);
     tm = localtime(&now.tv_sec);
     fprintf(stdout, "%.2d:%.2d:%.2d.%.6d ", tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec);
-    sprintf(time, "%.2d:%.2d:%.2d.%.6d ", tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec);
 
     switch (status){
     case STAT_SUCCESS:
@@ -59,10 +55,8 @@ int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu){
         if (pdu->errstat == SNMP_ERR_NOERROR){
             while (vp){
                 snprint_variable(buf, sizeof(buf), vp->name, vp->name_length, vp);
-                // fprintf(stdout, "%s: %s\n", sp->peername, buf);
+                fprintf(stdout, "%s: %s\n", sp->peername, buf);
                 vp = vp->next_variable;
-                strcat(time, buf);
-                printf("=====%s====\n", time);  
             }
         }else{
             for (ix = 1; vp && ix != pdu->errindex; vp = vp->next_variable, ix++){
