@@ -1,6 +1,6 @@
 # SNMP_Runner
 
-### if you want to run in your computer, you must modified snmprun.hpp line 13
+### if you want to run in your computer, you must modified snmprun.hpp line 39
 hosts[] = {  
     {"127.0.0.1", "public"}, 
     {NULL}  
@@ -15,7 +15,13 @@ hosts[] = {
 ---------- synchronous -----------  
 10:21:48.386554 xxx.xxx.xxx.xxx: SNMPv2-MIB::sysDescr.0 = STRING: XXXXXX XXXX 
 
-
+### build & run
+```
+[root@administrator SNMP_Runner]# make
+g++  -std=c++11  -c -o snmprun.o snmprun.cpp
+g++ -pthread -o snmprun snmprun.o `net-snmp-config --libs`
+[root@administrator SNMP_Runner]# ./snmprun
+```
 
 ### run project
 ```
