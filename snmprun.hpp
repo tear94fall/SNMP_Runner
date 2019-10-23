@@ -15,6 +15,7 @@ const int host_count=4;
 const int oid_count=9;
 
 const std::string timeout = "TIMEOUT";
+pthread_mutex_t pmutex = PTHREAD_MUTEX_INITIALIZER;
 
 std::string response[host_count][oid_count];
 /*
@@ -41,7 +42,8 @@ host hosts[] = {
     {"127.0.0.2", "public"},
     {"127.0.0.3", "public"},
     {"127.0.0.4", "public"},
-    {NULL}};
+    {NULL}
+};
 
 oid_struct oids[] = {
     {".1.3.6.1.2.1.1.2.0"},

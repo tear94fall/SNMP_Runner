@@ -55,6 +55,7 @@ void set_response(char* ipaddr, struct variable_list *vp, struct snmp_pdu *pdu){
     strcat(result_buffer, ipaddr);
     strcat(result_buffer, " : ");
 
+    pthread_mutex_lock(&pmutex);
     // 아이피가 이미 존재하는지 확인
     for(int i=0;i<host_count;i++){
         if(strcmp(response[i][0].c_str(),ipaddr)==0){
@@ -98,6 +99,8 @@ void set_response(char* ipaddr, struct variable_list *vp, struct snmp_pdu *pdu){
         }
     }
     memset(result_buffer, 0x00, sizeof(result_buffer));
+    
+    pthread_mutex_unlock(&pmutex);
 }
 
 int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu){
@@ -147,6 +150,8 @@ int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu){
         bool is_exist123 = false;
         int col_index123 = -1;
 
+
+        pthread_mutex_lock(&pmutex);
         // 아이피가 이미 존재하는지 확인
         for(int i=0;i<host_count;i++){
             if(strcmp(response[i][0].c_str(),ip_addr)==0){
@@ -167,7 +172,8 @@ int print_result(int status, struct snmp_session *sp, struct snmp_pdu *pdu){
                 }
             }
         }   
-
+        
+        pthread_mutex_unlock(&pmutex);
         return 0;
     }
     case STAT_ERROR:
@@ -274,6 +280,7 @@ void* receiver(void*){
         }
 
         for (int i = 0; i < host_count; i++){
+            pthread_mutex_lock(&pmutex);
             bool is_end=false;
             if(response[i][1] == "TIME OUT"){
                 is_end=true;
@@ -303,6 +310,8 @@ void* receiver(void*){
                 }
                 cnt++;
             }
+
+            pthread_mutex_unlock(&pmutex);
         }
     }
 }
